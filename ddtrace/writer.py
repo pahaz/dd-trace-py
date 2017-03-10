@@ -17,6 +17,7 @@ MAX_TRACES = 1000
 MAX_SERVICES = 1000
 
 DEFAULT_TIMEOUT = 5
+LOG_ERR_INTERVAL = 60
 
 
 class AgentWriter(object):
@@ -62,6 +63,7 @@ class AsyncWorker(object):
         self._lock = threading.Lock()
         self._thread = None
         self._shutdown_timeout = shutdown_timeout
+        self._last_error_ts = 0
         self.api = api
         self.start()
 
@@ -112,25 +114,47 @@ class AsyncWorker(object):
                     time.sleep(0.05)
 
     def _target(self):
+        result_traces = None
+        result_services = None
+
         while True:
             traces = self._trace_queue.pop()
             if traces:
                 # If we have data, let's try to send it.
                 try:
-                    self.api.send_traces(traces)
+                    result_traces = self.api.send_traces(traces)
                 except Exception as err:
                     log.error("cannot send spans: {0}".format(err))
 
             services = self._service_queue.pop()
             if services:
                 try:
-                    self.api.send_services(services)
+                    result_services = self.api.send_services(services)
                 except Exception as err:
                     log.error("cannot send services: {0}".format(err))
 
             elif self._trace_queue.closed():
-                # no traces and the queue is closed. our work is done.
+                # no traces and the queue is closed. our work is done
                 return
+
+            log_level = log.debug
+            if result_traces and result_traces.status >= 400:
+                now = time.time()
+                if now > self._last_error_ts + LOG_ERR_INTERVAL:
+                    log_level = log.error
+                    self._last_error_ts = now
+                log_level("failed_to_send traces to Agent: HTTP error status {}, reason {}, message {}".format(
+                        result_traces.status, result_traces.reason, result_traces.msg))
+                result_traces = None
+
+            if result_services and result_services.status >= 400:
+                now = time.time()
+                if now > self._last_error_ts + LOG_ERR_INTERVAL:
+                    log_level = log.error
+                    self._last_error_ts = now
+                log.level("failed_to_send services to Agent: HTTP error status {}, reason {}, message {}".format(
+                        result_services.status, result_services.reason, result_services.msg))
+                result_services = None
 
             time.sleep(1) # replace with a blocking pop.
 
