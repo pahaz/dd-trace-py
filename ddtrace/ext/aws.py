@@ -2,6 +2,7 @@ BLACKLIST_ENDPOINT = [
     'kms',
     'sts']
 
+
 def is_blacklist(endpoint_name):
     """Protecting the args sent to kms, sts to avoid security leaks
     """
