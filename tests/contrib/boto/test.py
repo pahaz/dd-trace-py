@@ -9,7 +9,7 @@ import boto.awslambda
 import boto.sqs
 import boto.kms
 import boto.sts
-from moto import mock_s3, mock_ec2, mock_lambda, mock_kms, mock_sts
+from moto import mock_s3, mock_ec2, mock_lambda, mock_sts
 
 # project
 from ddtrace import Pin

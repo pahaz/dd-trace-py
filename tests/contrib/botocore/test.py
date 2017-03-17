@@ -4,7 +4,7 @@ import unittest
 # 3p
 from nose.tools import eq_
 import botocore.session
-from moto import mock_s3, mock_ec2, mock_lambda, mock_sqs, mock_kinesis, mock_sts, mock_kms
+from moto import mock_s3, mock_ec2, mock_lambda, mock_sqs, mock_kinesis, mock_kms
 
 # project
 from ddtrace import Pin
