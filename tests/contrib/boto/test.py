@@ -105,6 +105,7 @@ class BotoTest(unittest.TestCase):
             span = spans[0]
             eq_(span.resource, "s3.head")
 
+
     @mock_lambda
     def test_lambda_client(self):
         lamb = boto.awslambda.connect_to_region("us-east-2")
