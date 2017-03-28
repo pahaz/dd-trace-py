@@ -39,12 +39,12 @@ def patched_api_call(original_func, instance, args, kwargs):
                           span_type=SPAN_TYPE) as span:
 
         operation = None
-        if args and len(args) > 1:
+        if args:
             operation = args[0]
             span.resource = '%s.%s' % (endpoint_name, operation.lower())
 
         else:
-            span.resource = '%s' % (endpoint_name)
+            span.resource = endpoint_name
 
         # Adding the args in TRACED_ARGS if exist to the span
         if not aws.is_blacklist(endpoint_name):
